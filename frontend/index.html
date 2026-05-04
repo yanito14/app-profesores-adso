@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo Profesores</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        header {
+            background: #1a73e8;
+            color: white;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 { font-size: 1.4rem; font-weight: 600; }
+
+        .container { max-width: 960px; margin: 32px auto; padding: 0 16px; }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: #1a73e8;
+            border-bottom: 2px solid #e8f0fe;
+            padding-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #e8f0fe;
+            color: #1a73e8;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td { padding: 10px 12px; border-bottom: 1px solid #f0f2f5; }
+        tr:hover td { background: #fafafa; }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .btn-primary { background: #1a73e8; color: white; }
+        .btn-primary:hover { background: #1557b0; }
+        .btn-danger { background: #ea4335; color: white; }
+        .btn-danger:hover { background: #c5221f; }
+        .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .status.ok { background: #e6f4ea; color: #137333; }
+        .status.error { background: #fce8e6; color: #c5221f; }
+
+        #alumnos-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #alumnos-modal.open { display: flex; }
+
+        .modal-box {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <span style="font-size:1.6rem">📚</span>
+    <h1>Módulo Profesores</h1>
+</header>
+
+<div class="container">
+
+    <!-- Estado del servidor -->
+    <div class="card">
+        <h2>Estado del servidor</h2>
+        <div id="health-status" class="status">Comprobando conexión...</div>
+    </div>
+
+    <!-- Asignaturas -->
+    <div class="card">
+        <h2>Asignaturas</h2>
+
+        <!-- Formulario nueva asignatura -->
+        <div class="form-row">
+            <input type="text" id="input-nombre" placeholder="Nombre de la asignatura">
+            <input type="text" id="input-descripcion" placeholder="Descripción (opcional)">
+            <input type="number" id="input-creditos" placeholder="Créditos" min="1" max="12">
+            <button class="btn btn-primary" onclick="crearAsignatura()">+ Añadir</button>
+        </div>
+
+        <table id="tabla-asignaturas">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Créditos</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="body-asignaturas">
+                <tr><td colspan="5" style="text-align:center;color:#999">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Inscripciones -->
+    <div class="card">
+        <h2>Inscripciones</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Alumno</th>
+                    <th>Correo</th>
+                    <th>Asignatura</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="body-inscripciones">
+                <tr><td colspan="5" style="text-align:center;color:#999">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- Modal alumnos inscritos -->
+<div id="alumnos-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="modal-titulo">Alumnos inscritos</h2>
+            <button class="close-btn" onclick="cerrarModal()">✕</button>
+        </div>
+        <table>
+            <thead>
+                <tr><th>ID</th><th>Nombre</th><th>Correo</th></tr>
+            </thead>
+            <tbody id="body-modal-alumnos">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const API = '/api';
+
+    // ── Health check ──────────────────────────────────────────────
+    async function checkHealth() {
+        try {
+            const res = await fetch(`${API}/health`);
+            const data = await res.json();
+            const el = document.getElementById('health-status');
+            el.className = 'status ok';
+            el.textContent = `✓ Servidor operativo — ${data.timestamp}`;
+        } catch {
+            const el = document.getElementById('health-status');
+            el.className = 'status error';
+            el.textContent = '✗ No se puede conectar con el servidor';
+        }
+    }
+
+    // ── Asignaturas ───────────────────────────────────────────────
+    async function cargarAsignaturas() {
+        try {
+            const res = await fetch(`${API}/asignaturas`);
+            const data = await res.json();
+            const tbody = document.getElementById('body-asignaturas');
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999">No hay asignaturas</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(a => `
+                <tr>
+                    <td><span class="badge">${a.id}</span></td>
+                    <td>${a.nombre}</td>
+                    <td>${a.descripcion || '—'}</td>
+                    <td>${a.creditos}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="verAlumnos(${a.id}, '${a.nombre}')">Ver alumnos</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarAsignatura(${a.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function crearAsignatura() {
+        const nombre = document.getElementById('input-nombre').value.trim();
+        const descripcion = document.getElementById('input-descripcion').value.trim();
+        const creditos = parseInt(document.getElementById('input-creditos').value);
+
+        if (!nombre || !creditos) {
+            alert('Nombre y créditos son obligatorios');
+            return;
+        }
+
+        await fetch(`${API}/asignaturas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, descripcion, creditos })
+        });
+
+        document.getElementById('input-nombre').value = '';
+        document.getElementById('input-descripcion').value = '';
+        document.getElementById('input-creditos').value = '';
+        cargarAsignaturas();
+    }
+
+    async function eliminarAsignatura(id) {
+        if (!confirm('¿Eliminar esta asignatura?')) return;
+        await fetch(`${API}/asignaturas/${id}`, { method: 'DELETE' });
+        cargarAsignaturas();
+        cargarInscripciones();
+    }
+
+    // ── Inscripciones ─────────────────────────────────────────────
+    async function cargarInscripciones() {
+        try {
+            const res = await fetch(`${API}/inscripciones`);
+            const data = await res.json();
+            const tbody = document.getElementById('body-inscripciones');
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999">No hay inscripciones</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(i => `
+                <tr>
+                    <td><span class="badge">${i.id}</span></td>
+                    <td>${i.alumno}</td>
+                    <td>${i.correo_alumno || '—'}</td>
+                    <td>${i.asignatura}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarInscripcion(${i.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function eliminarInscripcion(id) {
+        if (!confirm('¿Eliminar esta inscripción?')) return;
+        await fetch(`${API}/inscripciones/${id}`, { method: 'DELETE' });
+        cargarInscripciones();
+    }
+
+    // ── Modal alumnos ─────────────────────────────────────────────
+    async function verAlumnos(asignaturaId, nombre) {
+        document.getElementById('modal-titulo').textContent = `Alumnos en: ${nombre}`;
+        document.getElementById('alumnos-modal').classList.add('open');
+
+        const res = await fetch(`${API}/asignaturas/${asignaturaId}/alumnos`);
+        const data = await res.json();
+        const tbody = document.getElementById('body-modal-alumnos');
+
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999">Sin alumnos inscritos</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.map(a => `
+            <tr>
+                <td><span class="badge">${a.id}</span></td>
+                <td>${a.nombre}</td>
+                <td>${a.correo || '—'}</td>
+            </tr>
+        `).join('');
+    }
+
+    function cerrarModal() {
+        document.getElementById('alumnos-modal').classList.remove('open');
+    }
+
+    // ── Init ──────────────────────────────────────────────────────
+    checkHealth();
+    cargarAsignaturas();
+    cargarInscripciones();
+</script>
+
+</body>
+</html>
