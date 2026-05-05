@@ -39,7 +39,7 @@ router.get('/:id/alumnos', async (req, res) => {
             `SELECT a.id, a.nombre, a.correo
              FROM inscripciones i
              JOIN alumnos a ON i.id_alumno = a.id
-             WHERE i.asignatura_id = $1
+             WHERE i.id_asignatura = $1
              ORDER BY a.nombre ASC`,
             [req.params.id]
         );
