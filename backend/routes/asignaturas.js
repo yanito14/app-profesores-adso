@@ -38,7 +38,7 @@ router.get('/:id/alumnos', async (req, res) => {
         const result = await pool.query(
             `SELECT a.id, a.nombre, a.correo
              FROM inscripciones i
-             JOIN alumnos a ON i.alumno_id = a.id
+             JOIN alumnos a ON i.id_alumno = a.id
              WHERE i.asignatura_id = $1
              ORDER BY a.nombre ASC`,
             [req.params.id]
