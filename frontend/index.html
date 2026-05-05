@@ -170,7 +170,7 @@
         <!-- Formulario nueva asignatura -->
         <div class="form-row">
             <input type="text" id="input-nombre" placeholder="Nombre de la asignatura">
-            <input type="number" id="input-creditos" placeholder="Créditos" min="1" max="12">
+            <input type="number" id="input-ects" placeholder="ECTS" min="1" max="12">
             <button class="btn btn-primary" onclick="crearAsignatura()">+ Añadir</button>
         </div>
 
@@ -259,7 +259,7 @@
                 <tr>
                     <td><span class="badge">${a.id}</span></td>
                     <td>${a.nombre}</td>
-                    <td>${a.creditos}</td>
+                    <td>${a.ects}</td>
                     <td>
                         <button class="btn btn-primary btn-sm" onclick="verAlumnos(${a.id}, '${a.nombre}')">Ver alumnos</button>
                         <button class="btn btn-danger btn-sm" onclick="eliminarAsignatura(${a.id})">Eliminar</button>
@@ -273,21 +273,21 @@
 
     async function crearAsignatura() {
         const nombre = document.getElementById('input-nombre').value.trim();
-        const creditos = parseInt(document.getElementById('input-creditos').value);
+        const ects = parseInt(document.getElementById('input-ects').value);
 
-        if (!nombre || !creditos) {
-            alert('Nombre y créditos son obligatorios');
+        if (!nombre || !ects) {
+            alert('Nombre y ECTS son obligatorios');
             return;
         }
 
         await fetch(`${API}/asignaturas`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, creditos })
+            body: JSON.stringify({ nombre, ects })
         });
 
         document.getElementById('input-nombre').value = '';
-        document.getElementById('input-creditos').value = '';
+        document.getElementById('input-ects').value = '';
         cargarAsignaturas();
     }
 

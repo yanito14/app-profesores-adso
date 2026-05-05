@@ -52,14 +52,14 @@ router.get('/:id/alumnos', async (req, res) => {
 
 // POST /asignaturas — crear nueva asignatura
 router.post('/', async (req, res) => {
-    const { nombre, descripcion, creditos } = req.body;
-    if (!nombre || !creditos) {
-        return res.status(400).json({ error: 'nombre y creditos son obligatorios' });
+    const { nombre, descripcion, ects } = req.body;
+    if (!nombre || !ects) {
+        return res.status(400).json({ error: 'nombre y ects son obligatorios' });
     }
     try {
         const result = await pool.query(
-            'INSERT INTO asignaturas (nombre, descripcion, creditos) VALUES ($1, $2, $3) RETURNING *',
-            [nombre, descripcion, creditos]
+            'INSERT INTO asignaturas (nombre, ects) VALUES ($1, $2, $3) RETURNING *',
+            [nombre, ects]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -70,16 +70,16 @@ router.post('/', async (req, res) => {
 
 // PUT /asignaturas/:id — actualizar asignatura
 router.put('/:id', async (req, res) => {
-    const { nombre, descripcion, creditos } = req.body;
+    const { nombre, descripcion, ects } = req.body;
     try {
         const result = await pool.query(
             `UPDATE asignaturas
              SET nombre = COALESCE($1, nombre),
                  descripcion = COALESCE($2, descripcion),
-                 creditos = COALESCE($3, creditos)
+                 ects = COALESCE($3, ects)
              WHERE id = $4
              RETURNING *`,
-            [nombre, descripcion, creditos, req.params.id]
+            [nombre, descripcion, ects, req.params.id]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Asignatura no encontrada' });
