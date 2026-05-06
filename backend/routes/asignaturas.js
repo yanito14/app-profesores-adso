@@ -58,9 +58,9 @@ router.post('/', async (req, res) => {
     }
     try {
         const result = await pool.query(
-            `INSERT INTO asignaturas (nombre, descripcion, ects, cuatrimestre, curso, departamento)
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [nombre, descripcion, ects, cuatrimestre, curso, departamento]
+            `INSERT INTO asignaturas (nombre, descripcion, ects)
+             VALUES ($1, $2, $3) RETURNING *`,
+            [nombre, descripcion || null, parseInt(ects)]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
