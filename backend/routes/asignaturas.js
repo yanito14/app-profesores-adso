@@ -1,114 +1,115 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const pool = require('../db');
+const pool = require("../db");
 
 // GET /asignaturas — lista todas las asignaturas
-router.get('/', async (req, res) => {
-    try {
-        const result = await pool.query(
-            'SELECT * FROM asignaturas ORDER BY nombre ASC'
-        );
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error al obtener asignaturas' });
-    }
+router.get("/", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM asignaturas ORDER BY nombre ASC",
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener asignaturas" });
+  }
 });
 
 // GET /asignaturas/:id — detalle de una asignatura
-router.get('/:id', async (req, res) => {
-    try {
-        const result = await pool.query(
-            'SELECT * FROM asignaturas WHERE id = $1',
-            [req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Asignatura no encontrada' });
-        }
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error al obtener asignatura' });
+router.get("/:id", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM asignaturas WHERE id = $1", [
+      req.params.id,
+    ]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Asignatura no encontrada" });
     }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener asignatura" });
+  }
 });
 
 // GET /asignaturas/:id/alumnos — alumnos inscritos en una asignatura
-router.get('/:id/alumnos', async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT a.id, a.nombre, a.correo
+router.get("/:id/alumnos", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT a.id, a.nombre, a.correo
              FROM inscripciones i
              JOIN alumnos a ON i.id_alumno = a.id
              WHERE i.id_asignatura = $1
              ORDER BY a.nombre ASC`,
-            [req.params.id]
-        );
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error al obtener alumnos inscritos' });
-    }
+      [req.params.id],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener alumnos inscritos" });
+  }
 });
 
 // POST /asignaturas — crear nueva asignatura
-router.post('/', async (req, res) => {
-    const { nombre, descripcion, ects } = req.body;
-    if (!nombre || !ects) {
-        return res.status(400).json({ error: 'nombre y ects son obligatorios' });
-    }
-    try {
-        const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 AS nuevo_id FROM asignaturas');
-        const nuevoId = idRes.rows[0].nuevo_id;
-        const result = await pool.query(
-            `INSERT INTO asignaturas (id, nombre, descripcion, ects)
-             VALUES ($1, $2, $3, $4) RETURNING *`,
-            [nuevoId, nombre, descripcion || null, parseInt(ects)]
-        );
-        res.status(201).json(result.rows[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error al crear asignatura' });
-    }
+router.post("/", async (req, res) => {
+  const { nombre, descripcion, ects } = req.body;
+  if (!nombre || !ects) {
+    return res.status(400).json({ error: "nombre y ects son obligatorios" });
+  }
+  try {
+    const idRes = await pool.query(
+      "SELECT COALESCE(MAX(id), 0) + 1 AS nuevo_id FROM asignaturas",
+    );
+    const nuevoId = idRes.rows[0].nuevo_id;
+    const result = await pool.query(
+      `INSERT INTO asignaturas (id, nombre, ects)
+     VALUES ($1, $2, $3) RETURNING *`,
+      [nuevoId, nombre, parseInt(ects)],
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al crear asignatura" });
+  }
 });
 
 // PUT /asignaturas/:id — actualizar asignatura
-router.put('/:id', async (req, res) => {
-    const { nombre, descripcion, ects } = req.body;
-    try {
-        const result = await pool.query(
-            `UPDATE asignaturas
+router.put("/:id", async (req, res) => {
+  const { nombre, descripcion, ects } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE asignaturas
              SET nombre = COALESCE($1, nombre),
                  descripcion = COALESCE($2, descripcion),
                  ects = COALESCE($3, ects)
              WHERE id = $4
              RETURNING *`,
-            [nombre, descripcion, ects, req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Asignatura no encontrada' });
-        }
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error al actualizar asignatura' });
+      [nombre, descripcion, ects, req.params.id],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Asignatura no encontrada" });
     }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar asignatura" });
+  }
 });
 
 // DELETE /asignaturas/:id — eliminar asignatura
-router.delete('/:id', async (req, res) => {
-    try {
-        const result = await pool.query(
-            'DELETE FROM asignaturas WHERE id = $1 RETURNING *',
-            [req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Asignatura no encontrada' });
-        }
-        res.json({ mensaje: 'Asignatura eliminada correctamente' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error al eliminar asignatura' });
+router.delete("/:id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM asignaturas WHERE id = $1 RETURNING *",
+      [req.params.id],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Asignatura no encontrada" });
     }
+    res.json({ mensaje: "Asignatura eliminada correctamente" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al eliminar asignatura" });
+  }
 });
 
 module.exports = router;
