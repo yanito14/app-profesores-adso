@@ -52,15 +52,17 @@ router.get('/:id/alumnos', async (req, res) => {
 
 // POST /asignaturas — crear nueva asignatura
 router.post('/', async (req, res) => {
-    const { nombre, descripcion, ects, cuatrimestre, curso, departamento } = req.body;
+    const { nombre, descripcion, ects } = req.body;
     if (!nombre || !ects) {
         return res.status(400).json({ error: 'nombre y ects son obligatorios' });
     }
     try {
+        const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 AS nuevo_id FROM asignaturas');
+        const nuevoId = idRes.rows[0].nuevo_id;
         const result = await pool.query(
-            `INSERT INTO asignaturas (nombre, descripcion, ects)
-             VALUES ($1, $2, $3) RETURNING *`,
-            [nombre, descripcion || null, parseInt(ects)]
+            `INSERT INTO asignaturas (id, nombre, descripcion, ects)
+             VALUES ($1, $2, $3, $4) RETURNING *`,
+            [nuevoId, nombre, descripcion || null, parseInt(ects)]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
